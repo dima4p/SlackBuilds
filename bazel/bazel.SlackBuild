@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright 2009, 2010, 2011, 2012, 2013, 2016, 2018  Patrick J. Volkerding, Sebeka, Minnesota, USA
+# Copyright 2018  Dmitry Kulikov
 # All rights reserved.
 #
 # Redistribution and use of this script, with or without modification, is
@@ -40,7 +40,6 @@ fi
 # the name of the created package would be, and then exit. This information
 # could be useful to other scripts.
 if [ ! -z "${PRINT_PACKAGE_NAME}" ]; then
-  echo "$PKGNAM-$VERSION-$ARCH-$BUILD.txz"
   exit 0
 fi
 
@@ -64,19 +63,12 @@ PKG=$TMP/package-$PKGNAM
 OUTPUT=${OUTPUT:-/tmp}
 
 rm -rf $PKG
-echo mkdir -p $TMP $PKG
 mkdir -p $TMP $PKG
 cd $TMP
 rm -rf $PKGNAM-$VERSION
 
-echo $PKGNAM-$VERSION
-
-# # OUTPUT=${OUTPUT:-/tmp}
-
 unzip $CWD/$PKGNAM-${VERSION}-dist.zip -d $PKGNAM-${VERSION}
-ls -l
 cd $PKGNAM-$VERSION || exit 1
-ls -l
 bash ./compile.sh
 
 mkdir -p $PKG/usr/bin $PKG/usr/share/$PKGNAM
