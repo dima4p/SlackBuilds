@@ -1,0 +1,4 @@
+*.t?z
+
+# we need it as here are many other projects placed
+*/
