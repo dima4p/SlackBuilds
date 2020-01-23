@@ -3,6 +3,7 @@
 # Slackware build script for anki
 
 # Written by Giuseppe Scalzi <giuseppe[at]osgate[dot]org>
+# Adopted to 2.1.16 by Dmitry Kulikov <dima[at]koulikoff[dot]ru>
 
 PRGNAM=anki
 VERSION=${VERSION:-2.1.16}
@@ -23,7 +24,7 @@ rm -rf $PKG
 mkdir -p $TMP $PKG $OUTPUT
 cd $TMP
 rm -rf $PRGNAM-$VERSION
-tar xvf $CWD/$PRGNAM-$VERSION-source.tgz
+tar xvf $CWD/$PRGNAM-$VERSION.tar.gz
 cd $PRGNAM-$VERSION
 chown -R root:root .
 find -L . \
