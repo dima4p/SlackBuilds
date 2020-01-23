@@ -1,0 +1,88 @@
+#!/bin/sh
+
+# Slackware build script for anki
+
+# Written by Giuseppe Scalzi <giuseppe[at]osgate[dot]org>
+
+PRGNAM=anki
+VERSION=${VERSION:-2.1.16}
+BUILD=${BUILD:-1}
+TAG=${TAG:-_SBo}
+ARCH="noarch"
+
+CWD=$(pwd)
+TMP=${TMP:-/tmp/SBo}
+PKG=$TMP/package-$PRGNAM
+OUTPUT=${OUTPUT:-/tmp}
+
+PYTHONVER=$(python3 -V 2>&1 | cut -f 2 -d' ' | cut -f 1-2 -d.)
+
+set -e
+
+rm -rf $PKG
+mkdir -p $TMP $PKG $OUTPUT
+cd $TMP
+rm -rf $PRGNAM-$VERSION
+tar xvf $CWD/$PRGNAM-$VERSION-source.tgz
+cd $PRGNAM-$VERSION
+chown -R root:root .
+find -L . \
+ \( -perm 777 -o -perm 775 -o -perm 750 -o -perm 711 -o -perm 555 \
+  -o -perm 511 \) -exec chmod 755 {} \; -o \
+ \( -perm 666 -o -perm 664 -o -perm 640 -o -perm 600 -o -perm 444 \
+ -o -perm 440 -o -perm 400 \) -exec chmod 644 {} \;
+
+# Doing this manually since the included Makefile isn't very flexible (it always
+# installs the anki binary as ${DESTDIR}${PREFIX}/local/bin/anki for example),
+# and there isn't a lot of things that need copying.
+
+mkdir -p $PKG/usr/share/pixmaps
+cp -a anki.xpm anki.png $PKG/usr/share/pixmaps/
+
+mkdir -p $PKG/usr/share/mime/packages
+cat anki.xml > $PKG/usr/share/mime/packages/anki.xml
+
+mkdir -p $PKG/usr/share/applications
+cp -a anki.desktop $PKG/usr/share/applications/
+
+mkdir -p $PKG/usr/man/man1
+cp -a anki.1 $PKG/usr/man/man1
+
+find $PKG/usr/man -type f -exec gzip -9 {} \;
+for i in $( find $PKG/usr/man -type l ) ; do ln -s $( readlink $i ).gz $i.gz ; rm $i ; done
+
+mkdir -p $PKG/usr/doc/$PRGNAM-$VERSION
+cp -a LICENSE LICENSE.logo README.md README.development $PKG/usr/doc/$PRGNAM-$VERSION
+cat $CWD/$PRGNAM.SlackBuild > $PKG/usr/doc/$PRGNAM-$VERSION/$PRGNAM.SlackBuild
+
+./tools/build_ui.sh
+mkdir -p $PKG/usr/share/anki
+for file in $(find . -type d -maxdepth 1 | grep -Ev '.git|\.$|tests'); do
+  cp -av $file $PKG/usr/share/anki/
+done
+
+mkdir $PKG/usr/share/anki/dependencies
+virtualenv -p `which python3` $PKG/usr/share/anki/dependencies
+. $PKG/usr/share/anki/dependencies/bin/activate
+pip3 install -r requirements.txt
+pip3 install pyqt5
+pip3 install PyQtWebEngine
+
+mkdir -p $PKG/usr/bin
+tee $PKG/usr/bin/anki <<-EOF
+	. /usr/share/anki/dependencies/bin/activate
+	/usr/share/anki/runanki
+EOF
+cp -a runanki $PKG/usr/share/anki
+chmod 0755 $PKG/usr/bin/anki
+
+for file in $PKG/usr/share/anki/dependencies/bin/*; do
+  sed -i -re 's/\/tmp\/SBo\/package-anki//g' $file
+done
+
+mkdir -p $PKG/install
+cat $CWD/slack-desc > $PKG/install/slack-desc
+cat $CWD/doinst.sh > $PKG/install/doinst.sh
+
+cd $PKG
+/sbin/makepkg -l y -c n $OUTPUT/$PRGNAM-$VERSION-$ARCH-$BUILD$TAG.${PKGTYPE:-tgz}
